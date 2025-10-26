@@ -20,13 +20,12 @@ class DBHelper {
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE transactions (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          category TEXT,
-          amount REAL,
-          type TEXT,
-          date TEXT,
-          isCompleted INTEGER
-            )
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT,
+            amount REAL,
+            type TEXT,
+            date TEXT
+          )
         ''');
       },
     );
@@ -34,20 +33,16 @@ class DBHelper {
 
   Future<int> insertTransaction(TransactionModel txn) async {
     final db = await database;
-    return await db.insert(
-      'transactions',
-      txn.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    return await db.insert('transactions', txn.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<TransactionModel>> getTransactions() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'transactions',
-      orderBy: 'id DESC',
-    );
-    return List.generate(maps.length, (i) => TransactionModel.fromMap(maps[i]));
+    final List<Map<String, dynamic>> maps =
+        await db.query('transactions', orderBy: 'id DESC');
+    return List.generate(
+        maps.length, (i) => TransactionModel.fromMap(maps[i]));
   }
 
   Future<int> deleteTransaction(int id) async {

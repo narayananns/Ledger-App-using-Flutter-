@@ -2,9 +2,8 @@ class TransactionModel {
   int? id;
   String category;
   double amount;
-  String type; // Income or Expense
+  String type; // Income / Expense
   String date;
-  bool isCompleted;
 
   TransactionModel({
     this.id,
@@ -12,7 +11,6 @@ class TransactionModel {
     required this.amount,
     required this.type,
     required this.date,
-    this.isCompleted = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,7 +20,6 @@ class TransactionModel {
       'amount': amount,
       'type': type,
       'date': date,
-      'isCompleted': isCompleted ? 1 : 0,
     };
   }
 
@@ -33,7 +30,6 @@ class TransactionModel {
       amount: map['amount'],
       type: map['type'],
       date: map['date'],
-      isCompleted: map['isCompleted'] == 1,
     );
   }
 }

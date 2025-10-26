@@ -1,10 +1,16 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide HomeScreen;
 import 'package:provider/provider.dart';
 import 'providers/transaction_provider.dart';
 import 'screens/home_screen.dart';
-
 void main() {
-  runApp(const LedgerApp());
+  runApp(MultiProvider(
+      providers: [
+        ChangeNotifierProvider<TransactionProvider>(
+          create: (_) => TransactionProvider()..loadTransactions(),
+        ),
+      ],
+      child: const LedgerApp(),
+    ),);
 }
 
 class LedgerApp extends StatelessWidget {

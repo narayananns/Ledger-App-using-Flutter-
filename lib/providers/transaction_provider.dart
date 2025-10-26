@@ -5,61 +5,57 @@ import '../db/db_helper.dart';
 class TransactionProvider extends ChangeNotifier {
   final DBHelper _dbHelper = DBHelper();
   List<TransactionModel> _transactions = [];
+  final List<TransactionModel> _deletedTransactions = [];
 
   List<TransactionModel> get transactions => _transactions;
+  List<TransactionModel> get deletedTransactions => _deletedTransactions;
 
-  /// Load all transactions from the database
+  /// Load all transactions from DB
   Future<void> loadTransactions() async {
     try {
       _transactions = await _dbHelper.getTransactions();
-      notifyListeners(); // ✅ Update UI
+      notifyListeners();
       debugPrint("Loaded ${_transactions.length} transactions from DB.");
     } catch (e) {
       debugPrint("Error loading transactions: $e");
     }
   }
 
-  /// Add a new transaction and reload
+  /// Add new transaction
   Future<void> addTransaction(TransactionModel txn) async {
     try {
-      // Ensure the amount is positive
       txn.amount = txn.amount.abs();
-
-      // Normalize type string
       if (txn.type != "Income" && txn.type != "Expense") {
-        txn.type = "Expense"; // default fallback
+        txn.type = "Expense";
       }
 
       await _dbHelper.insertTransaction(txn);
-      await loadTransactions(); // reload to update UI
-      debugPrint(
-        "Added transaction: ${txn.category}, ${txn.amount}, ${txn.type}",
-      );
+      await loadTransactions();
+      debugPrint("Added transaction: ${txn.category}, ${txn.amount}, ${txn.type}");
     } catch (e) {
       debugPrint("Error adding transaction: $e");
     }
   }
 
-  /// Delete a transaction by id
+  /// Delete transaction (move to history)
   Future<void> deleteTransaction(int id) async {
     try {
+      final txn = _transactions.firstWhere((t) => t.id == id);
+      _deletedTransactions.add(txn);
       await _dbHelper.deleteTransaction(id);
-      await loadTransactions(); // reload to update UI
+      await loadTransactions();
+      notifyListeners();
       debugPrint("Deleted transaction id: $id");
     } catch (e) {
       debugPrint("Error deleting transaction: $e");
     }
   }
 
-  /// Calculate total balance
+  /// Get total balance
   double getTotalBalance() {
     double total = 0;
     for (var t in _transactions) {
-      if (t.type == "Income") {
-        total += t.amount;
-      } else {
-        total -= t.amount;
-      }
+      total += t.type == "Income" ? t.amount : -t.amount;
     }
     return total;
   }

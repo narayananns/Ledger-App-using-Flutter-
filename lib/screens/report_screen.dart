@@ -5,7 +5,7 @@ import '../models/transaction_model.dart';
 class ReportScreen extends StatelessWidget {
   final List<TransactionModel> transactions;
 
-  const ReportScreen({Key? key, required this.transactions}) : super(key: key);
+  const ReportScreen({super.key, required this.transactions});
 
   // Group total amounts by category (income positive, expense negative)
   Map<String, double> _groupByCategory() {
