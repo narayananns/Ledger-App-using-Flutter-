@@ -4,54 +4,46 @@ import '../db/db_helper.dart';
 
 class TransactionProvider extends ChangeNotifier {
   final DBHelper _dbHelper = DBHelper();
+
   List<TransactionModel> _transactions = [];
-  final List<TransactionModel> _deletedTransactions = [];
+  List<TransactionModel> _deletedTransactions = [];
 
   List<TransactionModel> get transactions => _transactions;
   List<TransactionModel> get deletedTransactions => _deletedTransactions;
 
-  /// Load all transactions from DB
+  // ---------------------- LOAD ALL DATA ----------------------
   Future<void> loadTransactions() async {
-    try {
-      _transactions = await _dbHelper.getTransactions();
-      notifyListeners();
-      debugPrint("Loaded ${_transactions.length} transactions from DB.");
-    } catch (e) {
-      debugPrint("Error loading transactions: $e");
-    }
+    final activeList = await _dbHelper.getTransactions();
+    final deletedList = await _dbHelper.getDeletedTransactions();
+
+    _transactions = activeList;
+    _deletedTransactions = deletedList;
+    notifyListeners();
   }
 
-  /// Add new transaction
+  // ---------------------- ADD TRANSACTION ----------------------
   Future<void> addTransaction(TransactionModel txn) async {
-    try {
-      txn.amount = txn.amount.abs();
-      if (txn.type != "Income" && txn.type != "Expense") {
-        txn.type = "Expense";
-      }
-
-      await _dbHelper.insertTransaction(txn);
-      await loadTransactions();
-      debugPrint("Added transaction: ${txn.category}, ${txn.amount}, ${txn.type}");
-    } catch (e) {
-      debugPrint("Error adding transaction: $e");
-    }
+    await _dbHelper.insertTransaction(txn);
+    await loadTransactions();
   }
 
-  /// Delete transaction (move to history)
+  // ---------------------- DELETE TRANSACTION ----------------------
   Future<void> deleteTransaction(int id) async {
     try {
+      // Find the transaction first
       final txn = _transactions.firstWhere((t) => t.id == id);
-      _deletedTransactions.add(txn);
+      // Save it to deleted_transactions
+      await _dbHelper.insertDeletedTransaction(txn);
+      // Remove from active list
       await _dbHelper.deleteTransaction(id);
+      // Reload all
       await loadTransactions();
-      notifyListeners();
-      debugPrint("Deleted transaction id: $id");
     } catch (e) {
-      debugPrint("Error deleting transaction: $e");
+      debugPrint("Delete error: $e");
     }
   }
 
-  /// Get total balance
+  // ---------------------- BALANCE ----------------------
   double getTotalBalance() {
     double total = 0;
     for (var t in _transactions) {

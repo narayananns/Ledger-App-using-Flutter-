@@ -10,7 +10,7 @@ class HistoryScreen extends StatelessWidget {
     try {
       final date = DateTime.parse(dateString);
       return DateFormat('dd MMM yyyy').format(date);
-    } catch (e) {
+    } catch (_) {
       return dateString;
     }
   }
@@ -19,38 +19,41 @@ class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<TransactionProvider>(
       builder: (context, provider, _) {
-        final deleted = provider.deletedTransactions;
+        final deletedList = provider.deletedTransactions;
 
-        if (deleted.isEmpty) {
+        if (deletedList.isEmpty) {
           return const Center(
             child: Text('No deleted transactions.'),
           );
         }
 
         return ListView.builder(
-          itemCount: deleted.length,
+          itemCount: deletedList.length,
           itemBuilder: (context, index) {
-            final t = deleted[index];
+            final txn = deletedList[index];
             return Card(
-              margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-              elevation: 1,
-              color: Colors.grey.shade200,
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              color: Colors.grey.shade100,
               child: ListTile(
                 leading: Icon(
-                  t.type == "Income" ? Icons.arrow_downward : Icons.arrow_upward,
-                  color: t.type == "Income" ? Colors.green : Colors.red,
+                  txn.type == 'Income'
+                      ? Icons.arrow_downward
+                      : Icons.arrow_upward,
+                  color: txn.type == 'Income' ? Colors.green : Colors.red,
                 ),
                 title: Text(
-                  t.category,
+                  txn.category,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-                subtitle: Text(_formatDate(t.date)),
+                subtitle: Text(_formatDate(txn.date)),
                 trailing: Text(
-                  '${t.type == "Income" ? "+" : "-"}₹${t.amount.toStringAsFixed(2)}',
+                  '${txn.type == 'Income' ? '+' : '-'}₹${txn.amount.toStringAsFixed(2)}',
                   style: TextStyle(
                     color:
-                        t.type == "Income" ? Colors.green : Colors.redAccent,
+                        txn.type == 'Income' ? Colors.green : Colors.redAccent,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
