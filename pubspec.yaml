@@ -52,6 +52,8 @@ dependencies:
 
   # For formatting currency and dates
   intl: ^0.19.0
+  # Utility for path operations used in DB helper
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:
@@ -68,7 +70,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/zoro.png"
+  image_path: "assets/ledger.png"
 
 
 # For information on the generic Dart part of this file, see the

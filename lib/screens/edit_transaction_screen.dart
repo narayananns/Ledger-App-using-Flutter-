@@ -3,42 +3,38 @@ import 'package:provider/provider.dart';
 import '../models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 
-class AddTransactionScreen extends StatefulWidget {
-  const AddTransactionScreen({super.key});
+class EditTransactionScreen extends StatefulWidget {
+  final TransactionModel transaction;
+
+  const EditTransactionScreen({super.key, required this.transaction});
 
   @override
-  State<AddTransactionScreen> createState() => _AddTransactionScreenState();
+  State<EditTransactionScreen> createState() => _EditTransactionScreenState();
 }
 
-class _AddTransactionScreenState extends State<AddTransactionScreen> {
+class _EditTransactionScreenState extends State<EditTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _amountController;
+  late TextEditingController _descriptionController;
   final TextEditingController _customCategoryController =
       TextEditingController();
 
-  String _selectedType = 'Expense';
+  late String _selectedType;
   String? _selectedCategory;
-  DateTime _selectedDate = DateTime.now();
-  bool _isSplit = false;
-  int _splitCount = 2;
+  late DateTime _selectedDate;
+  late bool _isSplit;
+  late int _splitCount;
 
   // Predefined categories
   final List<String> _incomeCategories = [
-    'Food',
-    'Petrol',
-    'House Rent',
-    'Shopping',
-    'Transportation',
-    'Bills & Utilities',
-    'Entertainment',
-    'Healthcare',
-    'Education',
-    'Travel',
-    'Groceries',
-    'Mobile Recharge',
-    'Internet',
+    'Salary',
+    'Freelance',
+    'Investment',
+    'Business',
+    'Gift',
+    'Bonus',
+    'Refund',
     'Others',
   ];
 
@@ -59,6 +55,43 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     'Others',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with existing transaction data
+    _nameController = TextEditingController(text: widget.transaction.name);
+    _amountController = TextEditingController(
+      text: widget.transaction.amount.toString(),
+    );
+    _descriptionController = TextEditingController(
+      text: widget.transaction.description,
+    );
+    _selectedType = widget.transaction.type;
+    _selectedDate = DateTime.parse(widget.transaction.date);
+    _isSplit = widget.transaction.isSplit;
+    _splitCount = widget.transaction.splitCount;
+
+    // Check if category is in predefined list
+    final categories = _selectedType == 'Income'
+        ? _incomeCategories
+        : _expenseCategories;
+    if (categories.contains(widget.transaction.category)) {
+      _selectedCategory = widget.transaction.category;
+    } else {
+      _selectedCategory = 'Others';
+      _customCategoryController.text = widget.transaction.category;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _amountController.dispose();
+    _descriptionController.dispose();
+    _customCategoryController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -69,7 +102,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.teal,
+              primary: Color(0xFF1A73E8),
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -87,7 +120,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     }
   }
 
-  void _saveTransaction() {
+  void _updateTransaction() {
     if (_formKey.currentState!.validate()) {
       if (_selectedCategory == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -122,8 +155,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         finalCategory = _customCategoryController.text.trim();
       }
 
-      final txn = TransactionModel(
-        id: null,
+      final updatedTxn = TransactionModel(
+        id: widget.transaction.id,
         name: _nameController.text.trim(),
         amount: double.parse(_amountController.text),
         category: finalCategory,
@@ -137,7 +170,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       Provider.of<TransactionProvider>(
         context,
         listen: false,
-      ).addTransaction(txn);
+      ).updateTransaction(updatedTxn);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -145,7 +178,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             children: const [
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 12),
-              Text('Transaction added successfully!'),
+              Text('Transaction updated successfully!'),
             ],
           ),
           backgroundColor: Colors.green,
@@ -157,6 +190,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       );
 
       Navigator.pop(context);
+      Navigator.pop(context); // Pop detail screen too
     }
   }
 
@@ -170,7 +204,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          'Add Transaction',
+          'Edit Transaction',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: const Color(0xFF1A73E8),
@@ -191,17 +225,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 elevation: 3,
                 child: TextFormField(
                   controller: _nameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Name',
                     hintText: 'Transaction name',
-                    prefixIcon: const Icon(
-                      Icons.label,
-                      color: Color(0xFF1A73E8),
-                    ),
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                    ),
+                    prefixIcon: Icon(Icons.label, color: Colors.blue),
+                    border: OutlineInputBorder(borderSide: BorderSide.none),
                   ),
+                  textCapitalization: TextCapitalization.words,
                   validator: (value) =>
                       value!.isEmpty ? 'Enter transaction name' : null,
                 ),
@@ -223,6 +253,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         prefixIcon: const Icon(
                           Icons.currency_rupee,
                           color: Colors.teal,
+                        ),
+                        border: const OutlineInputBorder(
+                          borderSide: BorderSide.none,
                         ),
                         suffixIcon: Container(
                           margin: const EdgeInsets.only(right: 8),
@@ -270,24 +303,21 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             ),
                           ),
                         ),
-                        border: const OutlineInputBorder(
-                          borderSide: BorderSide.none,
-                        ),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) =>
                           value!.isEmpty ? 'Enter amount' : null,
                       onChanged: (value) {
-                        setState(() {});
+                        setState(() {}); // Rebuild to update split amount
                       },
                     ),
                     if (_isSplit)
                       Container(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.08),
+                          color: const Color(
+                            0xFF1A73E8,
+                          ).withValues(alpha: 0.08),
                           borderRadius: const BorderRadius.only(
                             bottomLeft: Radius.circular(12),
                             bottomRight: Radius.circular(12),
@@ -315,9 +345,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
+                                          color: Colors.blue.shade200,
                                         ),
                                       ),
                                       child: Row(
@@ -334,9 +362,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                             iconSize: 18,
                                             padding: const EdgeInsets.all(4),
                                             constraints: const BoxConstraints(),
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
+                                            color: const Color(0xFF1A73E8),
                                           ),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
@@ -344,12 +370,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                             ),
                                             child: Text(
                                               '$_splitCount',
-                                              style: TextStyle(
+                                              style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
+                                                color: Color(0xFF1A73E8),
                                               ),
                                             ),
                                           ),
@@ -365,9 +389,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                             iconSize: 18,
                                             padding: const EdgeInsets.all(4),
                                             constraints: const BoxConstraints(),
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
+                                            color: const Color(0xFF1A73E8),
                                           ),
                                         ],
                                       ),
@@ -450,12 +472,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 elevation: 3,
                 child: DropdownButtonFormField<String>(
                   initialValue: _selectedCategory,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Category',
-                    prefixIcon: Icon(
-                      Icons.category,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                    prefixIcon: Icon(Icons.category, color: Colors.orange),
                     border: OutlineInputBorder(borderSide: BorderSide.none),
                   ),
                   hint: const Text('Select a category'),
@@ -473,7 +492,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   onChanged: (value) {
                     setState(() {
                       _selectedCategory = value;
-                      // Clear custom category field when changing selection
                       if (value != 'Others') {
                         _customCategoryController.clear();
                       }
@@ -485,7 +503,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Custom Category Field (shows only when "Others" is selected)
+              // Custom Category Field
               if (_selectedCategory == 'Others')
                 Card(
                   shape: RoundedRectangleBorder(
@@ -494,13 +512,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   elevation: 3,
                   child: TextFormField(
                     controller: _customCategoryController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Custom Category',
                       hintText: 'Enter your category',
-                      prefixIcon: Icon(
-                        Icons.edit,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                      prefixIcon: Icon(Icons.edit, color: Colors.deepOrange),
                       border: OutlineInputBorder(borderSide: BorderSide.none),
                     ),
                     textCapitalization: TextCapitalization.words,
@@ -516,13 +531,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 elevation: 3,
                 child: TextFormField(
                   controller: _descriptionController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Description (Optional)',
                     hintText: 'Add notes about this transaction',
-                    prefixIcon: Icon(
-                      Icons.notes,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                    prefixIcon: Icon(Icons.notes, color: Colors.purple),
                     border: OutlineInputBorder(borderSide: BorderSide.none),
                   ),
                   maxLines: 2,
@@ -547,7 +559,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           setState(() {
                             _selectedType = type;
                             // Reset category when type changes
-                            _selectedCategory = null;
+                            final categories = type == 'Income'
+                                ? _incomeCategories
+                                : _expenseCategories;
+                            if (!categories.contains(_selectedCategory)) {
+                              _selectedCategory = null;
+                            }
                           });
                         },
                         child: Container(
@@ -602,13 +619,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     vertical: 20,
                   ),
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.06),
+                    color: const Color(0xFF1A73E8).withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                    border: Border.all(color: const Color(0xFF1A73E8)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -620,19 +633,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      Icon(
-                        Icons.calendar_month,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                      const Icon(Icons.calendar_month, color: Colors.teal),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 32),
 
-              // Save Button
+              // Update Button
               ElevatedButton(
-                onPressed: _saveTransaction,
+                onPressed: _updateTransaction,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
@@ -644,10 +654,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    Icon(Icons.save_alt, color: Colors.white, size: 24),
+                    Icon(Icons.check_circle, color: Colors.white, size: 24),
                     SizedBox(width: 12),
                     Text(
-                      'Save Transaction',
+                      'Update Transaction',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

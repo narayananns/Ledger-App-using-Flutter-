@@ -16,25 +16,35 @@ class DBHelper {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
             category TEXT,
             amount REAL,
             type TEXT,
-            date TEXT
+            date TEXT,
+            description TEXT,
+            isSplit INTEGER DEFAULT 0,
+            splitCount INTEGER DEFAULT 1,
+            splitAmount REAL DEFAULT 0
           )
         ''');
 
         await db.execute('''
           CREATE TABLE deleted_transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
             category TEXT,
             amount REAL,
             type TEXT,
-            date TEXT
+            date TEXT,
+            description TEXT,
+            isSplit INTEGER DEFAULT 0,
+            splitCount INTEGER DEFAULT 1,
+            splitAmount REAL DEFAULT 0
           )
         ''');
       },
@@ -50,6 +60,40 @@ class DBHelper {
             )
           ''');
         }
+        if (oldVersion < 3) {
+          await db.execute(
+            'ALTER TABLE transactions ADD COLUMN name TEXT DEFAULT ""',
+          );
+          await db.execute(
+            'ALTER TABLE transactions ADD COLUMN description TEXT DEFAULT ""',
+          );
+          await db.execute(
+            'ALTER TABLE deleted_transactions ADD COLUMN name TEXT DEFAULT ""',
+          );
+          await db.execute(
+            'ALTER TABLE deleted_transactions ADD COLUMN description TEXT DEFAULT ""',
+          );
+        }
+        if (oldVersion < 4) {
+          await db.execute(
+            'ALTER TABLE transactions ADD COLUMN isSplit INTEGER DEFAULT 0',
+          );
+          await db.execute(
+            'ALTER TABLE transactions ADD COLUMN splitCount INTEGER DEFAULT 1',
+          );
+          await db.execute(
+            'ALTER TABLE transactions ADD COLUMN splitAmount REAL DEFAULT 0',
+          );
+          await db.execute(
+            'ALTER TABLE deleted_transactions ADD COLUMN isSplit INTEGER DEFAULT 0',
+          );
+          await db.execute(
+            'ALTER TABLE deleted_transactions ADD COLUMN splitCount INTEGER DEFAULT 1',
+          );
+          await db.execute(
+            'ALTER TABLE deleted_transactions ADD COLUMN splitAmount REAL DEFAULT 0',
+          );
+        }
       },
     );
   }
@@ -57,14 +101,27 @@ class DBHelper {
   // ---------------------- ACTIVE TRANSACTIONS ----------------------
   Future<int> insertTransaction(TransactionModel txn) async {
     final db = await database;
-    return await db.insert('transactions', txn.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    return await db.insert(
+      'transactions',
+      txn.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<List<TransactionModel>> getTransactions() async {
     final db = await database;
     final maps = await db.query('transactions', orderBy: 'id DESC');
     return List.generate(maps.length, (i) => TransactionModel.fromMap(maps[i]));
+  }
+
+  Future<int> updateTransaction(TransactionModel txn) async {
+    final db = await database;
+    return await db.update(
+      'transactions',
+      txn.toMap(),
+      where: 'id = ?',
+      whereArgs: [txn.id],
+    );
   }
 
   Future<int> deleteTransaction(int id) async {
@@ -75,8 +132,11 @@ class DBHelper {
   // ---------------------- DELETED TRANSACTIONS ----------------------
   Future<int> insertDeletedTransaction(TransactionModel txn) async {
     final db = await database;
-    return await db.insert('deleted_transactions', txn.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    return await db.insert(
+      'deleted_transactions',
+      txn.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<List<TransactionModel>> getDeletedTransactions() async {
