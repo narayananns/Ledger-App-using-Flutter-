@@ -1,0 +1,42 @@
+class AppConstants {
+  static const List<String> incomeCategories = [
+    'Salary',
+    'Freelance',
+    'Investment',
+    'Business',
+    'Gift',
+    'Bonus',
+    'Refund',
+    'Food',
+    'Petrol',
+    'House Rent',
+    'Shopping',
+    'Transportation',
+    'Bills & Utilities',
+    'Entertainment',
+    'Healthcare',
+    'Education',
+    'Travel',
+    'Groceries',
+    'Mobile Recharge',
+    'Internet',
+    'Others',
+  ];
+
+  static const List<String> expenseCategories = [
+    'Food',
+    'Petrol',
+    'House Rent',
+    'Shopping',
+    'Transportation',
+    'Bills & Utilities',
+    'Entertainment',
+    'Healthcare',
+    'Education',
+    'Travel',
+    'Groceries',
+    'Mobile Recharge',
+    'Internet',
+    'Others',
+  ];
+}

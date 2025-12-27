@@ -54,6 +54,10 @@ dependencies:
   intl: ^0.19.0
   # Utility for path operations used in DB helper
   path: ^1.9.0
+  google_fonts: ^6.3.3
+  firebase_core: ^4.3.0
+  firebase_auth: ^6.1.3
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:
