@@ -7,6 +7,7 @@ import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 import 'firebase_options.dart'; // Uncomment this after running flutterfire configure
+import 'widgets/common/carousel_loader.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +29,7 @@ class LedgerApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => TransactionProvider()..loadTransactions(),
+          create: (_) => TransactionProvider(),
         ),
         ChangeNotifierProvider(
           create: (_) => AuthService(),
@@ -56,14 +57,20 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           final user = snapshot.data;
+          
+          // Initializes the provider with the user (safe to call multiple times)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Provider.of<TransactionProvider>(context, listen: false).init(user);
+          });
+
           if (user == null) {
             return const LoginScreen();
           }
           return const HomeScreen(); // Loading/Loading transactions happen inside main/provider
         }
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
+        return Scaffold(
+          body: CarouselLoader(
+            message: 'Connecting to your account...',
           ),
         );
       },

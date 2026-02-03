@@ -22,72 +22,88 @@ class ReportScreen extends StatelessWidget {
     final data = _groupByCategory();
     final entries = data.entries.where((e) => e.value != 0).toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reports'),
-        centerTitle: true,
-        backgroundColor: Colors.redAccent,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFFE3F2FD), // Light Blue
+            Color(0xFFF3E5F5), // Light Purple
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
       ),
-      body: entries.isEmpty
-          ? const Center(child: Text('No data available'))
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  const Text(
-                    'Category-wise (Total Amount in charts)',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    " Green -> Income.",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.greenAccent,
-                      backgroundColor: Colors.black54
-                    ),
-                  ),
-                  SizedBox(height: 20,),
-                  Text(
-                    " Red -> Expense.",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.red,
-                      backgroundColor: Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: PieChart(
-                      PieChartData(
-                        sections: entries.map((e) {
-                          final isPositive = e.value >= 0;
-                          return PieChartSectionData(
-                            color: isPositive
-                                ? Colors.greenAccent
-                                : Colors.redAccent,
-                            value: e.value.abs(),
-                            title: '${e.key}\n${e.value.toStringAsFixed(2)}',
-                            radius: 90,
-                            titleStyle: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          );
-                        }).toList(),
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 40,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('Reports'),
+          centerTitle: true,
+          backgroundColor: Colors.redAccent,
+        ),
+        body: entries.isEmpty
+            ? const Center(child: Text('No data available'))
+            : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Category-wise (Total Amount in charts)',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 20),
+                    Text(
+                      " Green -> Income.",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.greenAccent,
+                        backgroundColor: Colors.black54,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      " Red -> Expense.",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.red,
+                        backgroundColor: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: PieChart(
+                        PieChartData(
+                          sections: entries.map((e) {
+                            final isPositive = e.value >= 0;
+                            return PieChartSectionData(
+                              color: isPositive
+                                  ? Colors.greenAccent
+                                  : Colors.redAccent,
+                              value: e.value.abs(),
+                              title: '${e.key}\n${e.value.toStringAsFixed(2)}',
+                              radius: 90,
+                              titleStyle: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            );
+                          }).toList(),
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 40,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }

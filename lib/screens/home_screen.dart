@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../providers/transaction_provider.dart';
+import '../models/transaction_model.dart';
 import '../services/auth_service.dart';
 import '../widgets/home/total_balance_card.dart';
 import '../widgets/home/transaction_list_item.dart';
+import '../widgets/common/carousel_loader.dart';
 import 'add_transaction_screen.dart';
 import 'history_screen.dart';
 import 'report_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +22,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  void _showDeleteDialog(BuildContext context, int id) {
+  void _showDeleteDialog(BuildContext context, String id) {
     showDialog(
       context: context,
       builder: (BuildContext ctx) {
@@ -80,8 +84,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               onPressed: () {
-                Provider.of<TransactionProvider>(context, listen: false)
-                    .deleteTransaction(id);
+                Provider.of<TransactionProvider>(
+                  context,
+                  listen: false,
+                ).deleteTransaction(id);
                 Navigator.of(ctx).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -141,37 +147,59 @@ class _HomeScreenState extends State<HomeScreen> {
         final transactions = provider.transactions;
         final totalBalance = provider.getTotalBalance();
 
-        if (transactions.isEmpty) {
-          return const Center(
-            child: Text(
-              'No transactions yet.\nTap "Add Transaction" to add one.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black54,
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
+        return RefreshIndicator(
+          onRefresh: () => provider.refreshData(),
+          color: const Color(0xFF1A73E8),
+          child: Skeletonizer(
+            enabled: provider.isLoading,
+            child: Column(
+              children: [
+                TotalBalanceCard(
+                  totalBalance: provider.isLoading ? 5430.50 : totalBalance,
+                ),
+                Expanded(
+                  child: (transactions.isEmpty && !provider.isLoading)
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 50),
+                            CarouselLoader(
+                              message: "Tap '+' to add your first transaction",
+                            ),
+                          ],
+                        )
+                      : ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(bottom: 80),
+                          itemCount: provider.isLoading
+                              ? 8
+                              : transactions.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 4),
+                          itemBuilder: (context, index) {
+                            if (provider.isLoading) {
+                              return TransactionListItem(
+                                transaction: TransactionModel(
+                                  name: "Grocery Shopping",
+                                  category: "Food & Drinks",
+                                  amount: 120.0,
+                                  type: "Expense",
+                                  date: DateTime.now().toIso8601String(),
+                                ),
+                                onDelete: () {},
+                              );
+                            }
+                            final t = transactions[index];
+                            return TransactionListItem(
+                              transaction: t,
+                              onDelete: () => _showDeleteDialog(context, t.id!),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
-          );
-        }
-
-        return Column(
-          children: [
-            TotalBalanceCard(totalBalance: totalBalance),
-            Expanded(
-              child: ListView.separated(
-                itemCount: transactions.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 4),
-                itemBuilder: (context, index) {
-                  final t = transactions[index];
-                  return TransactionListItem(
-                    transaction: t,
-                    onDelete: () => _showDeleteDialog(context, t.id!),
-                  );
-                },
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -179,48 +207,218 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = [_buildHome(context), const HistoryScreen()];
+    final screens = [
+      _buildHome(context),
+      const HistoryScreen(),
+      const ProfileScreen(),
+    ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Ledger Book',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          _selectedIndex == 0
+              ? 'Ledger Book'
+              : _selectedIndex == 1
+              ? 'History'
+              : 'Profile',
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
         backgroundColor: const Color(0xFF1A73E8),
         elevation: 0,
-        actions: [
-          Consumer<TransactionProvider>(
-            builder: (context, provider, _) => IconButton(
-              icon: const Icon(Icons.pie_chart),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        ReportScreen(transactions: provider.transactions),
+        actions: _selectedIndex == 2
+            ? [] // Hide actions on Profile screen
+            : [
+                Consumer<TransactionProvider>(
+                  builder: (context, provider, _) => IconButton(
+                    icon: const Icon(Icons.pie_chart),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ReportScreen(transactions: provider.transactions),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: () => _showLogoutDialog(context),
-            tooltip: 'Logout',
-          ),
-        ],
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert), // 3 dots settings icon
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'invite':
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Invite Friends functionality coming soon!',
+                            ),
+                          ),
+                        );
+                        break;
+                      case 'rate':
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Rate App functionality coming soon!',
+                            ),
+                          ),
+                        );
+                        break;
+                      case 'contact':
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Contact support: support@ledgerbook.com',
+                            ),
+                          ),
+                        );
+                        break;
+                      case 'terms':
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Terms & Conditions coming soon!'),
+                          ),
+                        );
+                        break;
+                      case 'privacy':
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Privacy Policy coming soon!'),
+                          ),
+                        );
+                        break;
+                      case 'about':
+                        showAboutDialog(
+                          context: context,
+                          applicationName: 'Ledger Book',
+                          applicationVersion: '1.0.0',
+                          applicationLegalese:
+                              '© 2026 Ledger Book. All rights reserved.',
+                          applicationIcon: const Icon(
+                            Icons.account_balance_wallet_rounded,
+                            size: 40,
+                            color: Color(0xFF1A73E8),
+                          ),
+                        );
+                        break;
+                      case 'logout':
+                        _showLogoutDialog(context);
+                        break;
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'invite',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.person_add_alt_1,
+                              color: Colors.blue,
+                            ),
+                            title: Text('Invite Friends'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'rate',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.star_rate_rounded,
+                              color: Colors.amber,
+                            ),
+                            title: Text('Rate App'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'contact',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.headset_mic_rounded,
+                              color: Colors.green,
+                            ),
+                            title: Text('Contact Us'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        const PopupMenuItem<String>(
+                          value: 'terms',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.gavel_rounded,
+                              color: Colors.grey,
+                            ),
+                            title: Text('Terms & Conditions'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'privacy',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.privacy_tip_rounded,
+                              color: Colors.grey,
+                            ),
+                            title: Text('Privacy Policy'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'about',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.info_outline_rounded,
+                              color: Colors.blueGrey,
+                            ),
+                            title: Text('About'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        const PopupMenuItem<String>(
+                          value: 'logout',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.logout_rounded,
+                              color: Colors.redAccent,
+                            ),
+                            title: Text(
+                              'Logout',
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                ),
+              ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white70, Colors.white30],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: screens[_selectedIndex],
+      body: Consumer<TransactionProvider>(
+        builder: (context, provider, child) {
+          // Permanently use the nice gradient for all screens for consistency
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFFE3F2FD), // Light Blue
+                  Color(0xFFF3E5F5), // Light Purple
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: screens[_selectedIndex],
+          );
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -241,6 +439,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history_rounded),
             label: "History",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: "Profile",
           ),
         ],
       ),

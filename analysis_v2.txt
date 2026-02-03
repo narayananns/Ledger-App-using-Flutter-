@@ -1,0 +1,4 @@
+﻿Analyzing ledger...                                             
+
+  error - The getter 'deletedTransactions' isn't defined for the type 'TransactionProvider' - lib\screens\history_screen.dart:22:38 - undefined_getter
+
