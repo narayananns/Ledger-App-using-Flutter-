@@ -96,9 +96,18 @@ class _TransactionFormState extends State<TransactionForm> {
       },
     );
 
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null) {
+      // Preserve the current time (or previously selected time) when changing the date
+      final newDateTime = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        _selectedDate.hour,
+        _selectedDate.minute,
+        _selectedDate.second,
+      );
       setState(() {
-        _selectedDate = picked;
+        _selectedDate = newDateTime;
       });
     }
   }
@@ -143,7 +152,7 @@ class _TransactionFormState extends State<TransactionForm> {
         amount: double.parse(_amountController.text),
         category: finalCategory,
         type: _selectedType,
-        date: _selectedDate.toString().split(' ')[0],
+        date: _selectedDate.toIso8601String(),
         description: _descriptionController.text.trim(),
         isSplit: _isSplit,
         splitCount: _isSplit ? _splitCount : 1,

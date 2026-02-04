@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 import '../models/transaction_model.dart';
 import '../services/auth_service.dart';
 import '../widgets/home/total_balance_card.dart';
 import '../widgets/home/transaction_list_item.dart';
 import '../widgets/common/carousel_loader.dart';
+import '../widgets/common/search_bar_widget.dart';
 import 'add_transaction_screen.dart';
 import 'history_screen.dart';
 import 'report_screen.dart';
@@ -21,6 +23,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _showDeleteDialog(BuildContext context, String id) {
     showDialog(
@@ -147,6 +157,15 @@ class _HomeScreenState extends State<HomeScreen> {
         final transactions = provider.transactions;
         final totalBalance = provider.getTotalBalance();
 
+        final filteredTransactions = transactions.where((t) {
+          final query = _searchQuery.toLowerCase();
+          return t.name.toLowerCase().contains(query) ||
+              t.category.toLowerCase().contains(query);
+        }).toList();
+
+        // Ensure sorted by date for grouping
+        filteredTransactions.sort((a, b) => b.date.compareTo(a.date));
+
         return RefreshIndicator(
           onRefresh: () => provider.refreshData(),
           color: const Color(0xFF1A73E8),
@@ -157,10 +176,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 TotalBalanceCard(
                   totalBalance: provider.isLoading ? 5430.50 : totalBalance,
                 ),
+                SearchBarWidget(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                ),
                 Expanded(
                   child: (transactions.isEmpty && !provider.isLoading)
                       ? ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
                           children: const [
                             SizedBox(height: 50),
                             CarouselLoader(
@@ -168,31 +197,99 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         )
-                      : ListView.separated(
+                      : (filteredTransactions.isEmpty && !provider.isLoading)
+                      ? ListView(
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          children: const [
+                            SizedBox(height: 50),
+                            Center(
+                              child: Text(
+                                "No results found",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
                           padding: const EdgeInsets.only(bottom: 80),
                           itemCount: provider.isLoading
                               ? 8
-                              : transactions.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 4),
+                              : filteredTransactions.length,
                           itemBuilder: (context, index) {
                             if (provider.isLoading) {
-                              return TransactionListItem(
-                                transaction: TransactionModel(
-                                  name: "Grocery Shopping",
-                                  category: "Food & Drinks",
-                                  amount: 120.0,
-                                  type: "Expense",
-                                  date: DateTime.now().toIso8601String(),
-                                ),
-                                onDelete: () {},
+                              return Column(
+                                children: [
+                                  TransactionListItem(
+                                    transaction: TransactionModel(
+                                      name: "Grocery Shopping",
+                                      category: "Food & Drinks",
+                                      amount: 120.0,
+                                      type: "Expense",
+                                      date: DateTime.now().toIso8601String(),
+                                    ),
+                                    onDelete: () {},
+                                  ),
+                                  const SizedBox(height: 4),
+                                ],
                               );
                             }
-                            final t = transactions[index];
-                            return TransactionListItem(
-                              transaction: t,
-                              onDelete: () => _showDeleteDialog(context, t.id!),
+
+                            final t = filteredTransactions[index];
+                            bool showHeader = false;
+
+                            if (index == 0) {
+                              showHeader = true;
+                            } else {
+                              try {
+                                final prevT = filteredTransactions[index - 1];
+                                final prevDate = DateTime.parse(prevT.date);
+                                final currDate = DateTime.parse(t.date);
+                                if (prevDate.year != currDate.year ||
+                                    prevDate.month != currDate.month) {
+                                  showHeader = true;
+                                }
+                              } catch (_) {
+                                showHeader = true;
+                              }
+                            }
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (showHeader)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      24,
+                                      16,
+                                      8,
+                                    ),
+                                    child: Text(
+                                      DateFormat(
+                                        'MMM yyyy',
+                                      ).format(DateTime.parse(t.date)),
+                                      style: TextStyle(
+                                        color: Colors.grey.shade700,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                TransactionListItem(
+                                  transaction: t,
+                                  onDelete: () =>
+                                      _showDeleteDialog(context, t.id!),
+                                ),
+                                const SizedBox(height: 4),
+                              ],
                             );
                           },
                         ),
@@ -402,23 +499,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
       ),
-      body: Consumer<TransactionProvider>(
-        builder: (context, provider, child) {
-          // Permanently use the nice gradient for all screens for consistency
-          return Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFFE3F2FD), // Light Blue
-                  Color(0xFFF3E5F5), // Light Purple
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Consumer<TransactionProvider>(
+          builder: (context, provider, child) {
+            // Permanently use the nice gradient for all screens for consistency
+            return Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFE3F2FD), // Light Blue
+                    Color(0xFFF3E5F5), // Light Purple
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-            ),
-            child: screens[_selectedIndex],
-          );
-        },
+              child: screens[_selectedIndex],
+            );
+          },
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,

@@ -11,44 +11,60 @@ class EditTransactionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text(
-          'Edit Transaction',
-          style: TextStyle(fontWeight: FontWeight.w600),
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFFE3F2FD), // Light Blue
+            Color(0xFFF3E5F5), // Light Purple
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        backgroundColor: const Color(0xFF1A73E8),
-        centerTitle: true,
-        elevation: 0,
       ),
-      body: TransactionForm(
-        initialTransaction: transaction,
-        submitButtonText: 'Update Transaction',
-        onSubmit: (updatedTxn) {
-          Provider.of<TransactionProvider>(context, listen: false)
-              .updateTransaction(updatedTxn);
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text(
+            'Edit Transaction',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: const Color(0xFF1A73E8),
+          centerTitle: true,
+          elevation: 0,
+        ),
+        body: TransactionForm(
+          initialTransaction: transaction,
+          submitButtonText: 'Update Transaction',
+          onSubmit: (updatedTxn) {
+            Provider.of<TransactionProvider>(
+              context,
+              listen: false,
+            ).updateTransaction(updatedTxn);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: const [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 12),
-                  Text('Transaction updated successfully!'),
-                ],
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: const [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Text('Transaction updated successfully!'),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
+            );
 
-          Navigator.pop(context); // Pop edit screen
-          Navigator.pop(context); // Pop detail screen
-        },
+            Navigator.pop(context); // Pop edit screen
+            Navigator.pop(context); // Pop detail screen
+          },
+        ),
       ),
     );
   }

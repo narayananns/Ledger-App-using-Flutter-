@@ -16,7 +16,7 @@ class TransactionDetailScreen extends StatelessWidget {
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
-      return DateFormat('dd MMMM yyyy').format(date);
+      return DateFormat('dd MMMM yyyy, hh:mm a').format(date);
     } catch (e) {
       return dateString;
     }
@@ -25,6 +25,8 @@ class TransactionDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [

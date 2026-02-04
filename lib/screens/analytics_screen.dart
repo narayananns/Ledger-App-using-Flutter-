@@ -258,6 +258,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
 
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
