@@ -25,7 +25,8 @@ class _TransactionFormState extends State<TransactionForm> {
   late TextEditingController _nameController;
   late TextEditingController _amountController;
   late TextEditingController _descriptionController;
-  final TextEditingController _customCategoryController = TextEditingController();
+  final TextEditingController _customCategoryController =
+      TextEditingController();
 
   late String _selectedType;
   String? _selectedCategory;
@@ -37,11 +38,15 @@ class _TransactionFormState extends State<TransactionForm> {
   void initState() {
     super.initState();
     final txn = widget.initialTransaction;
-    
+
     _nameController = TextEditingController(text: txn?.name ?? '');
-    _amountController = TextEditingController(text: txn?.amount.toString() ?? '');
-    _descriptionController = TextEditingController(text: txn?.description ?? '');
-    
+    _amountController = TextEditingController(
+      text: txn?.amount.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: txn?.description ?? '',
+    );
+
     _selectedType = txn?.type ?? 'Expense';
     _selectedDate = txn != null ? DateTime.parse(txn.date) : DateTime.now();
     _isSplit = txn?.isSplit ?? false;
@@ -51,7 +56,7 @@ class _TransactionFormState extends State<TransactionForm> {
       final categories = _selectedType == 'Income'
           ? AppConstants.incomeCategories
           : AppConstants.expenseCategories;
-          
+
       if (categories.contains(txn.category)) {
         _selectedCategory = txn.category;
       } else {
@@ -91,9 +96,18 @@ class _TransactionFormState extends State<TransactionForm> {
       },
     );
 
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null) {
+      // Preserve the current time (or previously selected time) when changing the date
+      final newDateTime = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        _selectedDate.hour,
+        _selectedDate.minute,
+        _selectedDate.second,
+      );
       setState(() {
-        _selectedDate = picked;
+        _selectedDate = newDateTime;
       });
     }
   }
@@ -106,7 +120,9 @@ class _TransactionFormState extends State<TransactionForm> {
             content: const Text('Please select a category'),
             backgroundColor: Colors.orange,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         return;
@@ -120,7 +136,9 @@ class _TransactionFormState extends State<TransactionForm> {
               content: const Text('Please enter a custom category'),
               backgroundColor: Colors.orange,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           );
           return;
@@ -134,7 +152,7 @@ class _TransactionFormState extends State<TransactionForm> {
         amount: double.parse(_amountController.text),
         category: finalCategory,
         type: _selectedType,
-        date: _selectedDate.toString().split(' ')[0],
+        date: _selectedDate.toIso8601String(),
         description: _descriptionController.text.trim(),
         isSplit: _isSplit,
         splitCount: _isSplit ? _splitCount : 1,
@@ -161,7 +179,8 @@ class _TransactionFormState extends State<TransactionForm> {
             hint: 'Transaction name',
             prefixIcon: Icons.label,
             textCapitalization: TextCapitalization.words,
-            validator: (value) => value!.isEmpty ? 'Enter transaction name' : null,
+            validator: (value) =>
+                value!.isEmpty ? 'Enter transaction name' : null,
           ),
           const SizedBox(height: 16),
           _buildAmountField(splitAmount),
@@ -195,7 +214,9 @@ class _TransactionFormState extends State<TransactionForm> {
             onPressed: _handleSubmit,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               backgroundColor: const Color(0xFF1A73E8),
               elevation: 3,
             ),
@@ -239,9 +260,14 @@ class _TransactionFormState extends State<TransactionForm> {
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: _isSplit ? const Color(0xFF1A73E8) : Colors.grey.shade200,
+                      color: _isSplit
+                          ? const Color(0xFF1A73E8)
+                          : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -258,7 +284,9 @@ class _TransactionFormState extends State<TransactionForm> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: _isSplit ? Colors.white : Colors.grey.shade600,
+                            color: _isSplit
+                                ? Colors.white
+                                : Colors.grey.shade600,
                           ),
                         ),
                       ],
@@ -268,8 +296,16 @@ class _TransactionFormState extends State<TransactionForm> {
               ),
               border: const OutlineInputBorder(borderSide: BorderSide.none),
             ),
-            keyboardType: TextInputType.number,
-            validator: (value) => value!.isEmpty ? 'Enter amount' : null,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Enter amount';
+              }
+              if (double.tryParse(value) == null) {
+                return 'Enter a valid number';
+              }
+              return null;
+            },
             onChanged: (value) => setState(() {}),
           ),
           if (_isSplit)
@@ -308,7 +344,9 @@ class _TransactionFormState extends State<TransactionForm> {
                             child: Row(
                               children: [
                                 IconButton(
-                                  onPressed: _splitCount > 2 ? () => setState(() => _splitCount--) : null,
+                                  onPressed: _splitCount > 2
+                                      ? () => setState(() => _splitCount--)
+                                      : null,
                                   icon: const Icon(Icons.remove),
                                   iconSize: 18,
                                   padding: const EdgeInsets.all(4),
@@ -316,7 +354,9 @@ class _TransactionFormState extends State<TransactionForm> {
                                   color: const Color(0xFF1A73E8),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                   child: Text(
                                     '$_splitCount',
                                     style: const TextStyle(
@@ -327,7 +367,9 @@ class _TransactionFormState extends State<TransactionForm> {
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed: _splitCount < 20 ? () => setState(() => _splitCount++) : null,
+                                  onPressed: _splitCount < 20
+                                      ? () => setState(() => _splitCount++)
+                                      : null,
                                   icon: const Icon(Icons.add),
                                   iconSize: 18,
                                   padding: const EdgeInsets.all(4),
@@ -340,7 +382,10 @@ class _TransactionFormState extends State<TransactionForm> {
                           const SizedBox(width: 8),
                           Text(
                             'people',
-                            style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade700,
+                            ),
                           ),
                         ],
                       ),
@@ -362,7 +407,11 @@ class _TransactionFormState extends State<TransactionForm> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.person, size: 20, color: Colors.green.shade700),
+                              Icon(
+                                Icons.person,
+                                size: 20,
+                                color: Colors.green.shade700,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 'Per person:',
@@ -403,15 +452,22 @@ class _TransactionFormState extends State<TransactionForm> {
         value: _selectedCategory,
         decoration: InputDecoration(
           labelText: 'Category',
-          prefixIcon: Icon(Icons.category, color: Theme.of(context).primaryColor),
+          prefixIcon: Icon(
+            Icons.category,
+            color: Theme.of(context).primaryColor,
+          ),
           border: const OutlineInputBorder(borderSide: BorderSide.none),
         ),
         hint: const Text('Select a category'),
-        items: (_selectedType == 'Income'
-            ? AppConstants.incomeCategories
-            : AppConstants.expenseCategories)
-            .map((category) => DropdownMenuItem(value: category, child: Text(category)))
-            .toList(),
+        items:
+            (_selectedType == 'Income'
+                    ? AppConstants.incomeCategories
+                    : AppConstants.expenseCategories)
+                .map(
+                  (category) =>
+                      DropdownMenuItem(value: category, child: Text(category)),
+                )
+                .toList(),
         onChanged: (value) {
           setState(() {
             _selectedCategory = value;
@@ -455,7 +511,9 @@ class _TransactionFormState extends State<TransactionForm> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      type == 'Income' ? Icons.arrow_downward : Icons.arrow_upward,
+                      type == 'Income'
+                          ? Icons.arrow_downward
+                          : Icons.arrow_upward,
                       color: isSelected ? Colors.white : Colors.black54,
                       size: 20,
                     ),

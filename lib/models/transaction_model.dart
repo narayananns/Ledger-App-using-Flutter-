@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TransactionModel {
-  int? id;
+  String? id;
   String name;
   String category;
   double amount;
@@ -32,31 +34,31 @@ class TransactionModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'name': name,
       'category': category,
       'amount': amount,
       'type': type,
       'date': date,
       'description': description,
-      'isSplit': isSplit ? 1 : 0,
+      'isSplit': isSplit, // Firestore supports bool
       'splitCount': splitCount,
       'splitAmount': splitAmount,
+      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 
-  factory TransactionModel.fromMap(Map<String, dynamic> map) {
+  factory TransactionModel.fromMap(Map<String, dynamic> map, String docId) {
     return TransactionModel(
-      id: map['id'],
+      id: docId,
       name: map['name'] ?? '',
-      category: map['category'],
-      amount: map['amount'],
-      type: map['type'],
-      date: map['date'],
+      category: map['category'] ?? 'Others',
+      amount: (map['amount'] ?? 0).toDouble(),
+      type: map['type'] ?? 'Expense',
+      date: map['date'] ?? DateTime.now().toString().split(' ')[0],
       description: map['description'] ?? '',
-      isSplit: (map['isSplit'] ?? 0) == 1,
+      isSplit: map['isSplit'] ?? false,
       splitCount: map['splitCount'] ?? 1,
-      splitAmount: map['splitAmount'] ?? map['amount'],
+      splitAmount: (map['splitAmount'] ?? map['amount'] ?? 0).toDouble(),
     );
   }
 }

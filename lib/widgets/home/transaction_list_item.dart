@@ -16,7 +16,9 @@ class TransactionListItem extends StatelessWidget {
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
-      return DateFormat('dd MMM yyyy').format(date);
+      // Check if time is available (not midnight 00:00:00 if it was stripped before)
+      // But actually, showing 12:00 AM for old items is fine for now, or just standardized format.
+      return DateFormat('dd MMM yyyy, hh:mm a').format(date);
     } catch (e) {
       return dateString;
     }
