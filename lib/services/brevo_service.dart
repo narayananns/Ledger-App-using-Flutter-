@@ -6,7 +6,7 @@ class BrevoService {
   // Brevo (Sendinblue) API Key V3
   // ⚠️ SECURITY WARNING: In production, it is recommended to move this to a backend service.
   static const String _apiKey =
-      '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';
+      'YOUR_BREVO_API_KEY_HERE';
 
   // Brevo V3 SMTP Endpoint
   static const String _baseUrl = 'https://api.brevo.com/v3/smtp/email';
@@ -48,13 +48,14 @@ class BrevoService {
         debugPrint('📧 Email sent successfully to $toEmail');
         return true;
       } else {
-        debugPrint('❌ Failed to send email. Status: ${response.statusCode}');
-        debugPrint('Response: ${response.body}');
-        return false;
+        final msg =
+            'Failed to send email. Status: ${response.statusCode}. Response: ${response.body}';
+        debugPrint('❌ $msg');
+        throw Exception(msg);
       }
     } catch (e) {
       debugPrint('❌ Error sending email: $e');
-      return false;
+      throw Exception('Email Service Error: $e');
     }
   }
 
