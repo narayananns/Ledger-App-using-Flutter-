@@ -29,6 +29,9 @@ class TransactionListItem extends StatelessWidget {
     final isIncome = transaction.type == "Income";
 
     return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           Navigator.push(

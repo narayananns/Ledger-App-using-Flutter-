@@ -299,7 +299,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     ),
                                   ),
                                 Card(
-                                  margin: const EdgeInsets.only(bottom: 8),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
                                   elevation: 2,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),

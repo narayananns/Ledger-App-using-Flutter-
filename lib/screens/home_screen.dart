@@ -288,7 +288,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   onDelete: () =>
                                       _showDeleteDialog(context, t.id!),
                                 ),
-                                const SizedBox(height: 4),
                               ],
                             );
                           },
