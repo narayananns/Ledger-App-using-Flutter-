@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 
 class BrevoService {
   // Brevo (Sendinblue) API Key V3
-  // ⚠️ SECURITY WARNING: In production, it is recommended to move this to a backend service.
-  static const String _apiKey =
-      'YOUR_BREVO_API_KEY_HERE';
+  // ⚠️ SECURITY WARNING: This key should not be committed to version control.
+  // Replace 'YOUR_BREVO_API_KEY' with your actual key locally or use --dart-define.
+  static const String _apiKey = 'YOUR_BREVO_API_KEY';
 
   // Brevo V3 SMTP Endpoint
   static const String _baseUrl = 'https://api.brevo.com/v3/smtp/email';
