@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TransactionModel {
   String? id;
+  String? userId; // Added userId for better data usage
   String name;
   String category;
   double amount;
@@ -11,9 +12,11 @@ class TransactionModel {
   bool isSplit;
   int splitCount;
   double splitAmount;
+  DateTime? createdAt; // Added createdAt
 
   TransactionModel({
     this.id,
+    this.userId,
     required this.name,
     required this.category,
     required this.amount,
@@ -23,6 +26,7 @@ class TransactionModel {
     this.isSplit = false,
     this.splitCount = 1,
     this.splitAmount = 0.0,
+    this.createdAt,
   }) {
     // Calculate split amount if split is enabled
     if (isSplit && splitCount > 0) {
@@ -34,22 +38,36 @@ class TransactionModel {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
+      'userId': userId,
       'name': name,
       'category': category,
       'amount': amount,
       'type': type,
       'date': date,
       'description': description,
-      'isSplit': isSplit, // Firestore supports bool
+      'isSplit': isSplit,
       'splitCount': splitCount,
       'splitAmount': splitAmount,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
     };
   }
 
   factory TransactionModel.fromMap(Map<String, dynamic> map, String docId) {
+    DateTime? created;
+    if (map['createdAt'] != null) {
+      if (map['createdAt'] is Timestamp) {
+        created = (map['createdAt'] as Timestamp).toDate();
+      } else if (map['createdAt'] is String) {
+        created = DateTime.tryParse(map['createdAt']);
+      }
+    }
+
     return TransactionModel(
       id: docId,
+      userId: map['userId'] as String?,
       name: map['name'] ?? '',
       category: map['category'] ?? 'Others',
       amount: (map['amount'] ?? 0).toDouble(),
@@ -59,6 +77,7 @@ class TransactionModel {
       isSplit: map['isSplit'] ?? false,
       splitCount: map['splitCount'] ?? 1,
       splitAmount: (map['splitAmount'] ?? map['amount'] ?? 0).toDouble(),
+      createdAt: created,
     );
   }
 }
