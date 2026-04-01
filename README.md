@@ -75,7 +75,7 @@ The app uses Brevo's V3 API to send transactional emails directly to users (e.g.
 
 ## 📂 Project Structure
 
-The project follows a scalable directory structure:
+The project follows a scalable directory structure as follows:
 
 ```
 lib/
